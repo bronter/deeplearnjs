@@ -16,10 +16,10 @@
  */
 
 // tslint:disable-next-line:max-line-length
-import {Initializer, VarianceScalingInitializer, ZerosInitializer} from '../initializers';
+import { Initializer, VarianceScalingInitializer, ZerosInitializer } from '../initializers';
 import * as concat_util from '../math/concat_util';
 import * as conv_util from '../math/conv_util';
-import {NDArray, Scalar} from '../math/ndarray';
+import { NDArray, Scalar } from '../math/ndarray';
 import * as util from '../util';
 
 /**
@@ -27,23 +27,23 @@ import * as util from '../util';
  * automatically for layers.
  */
 export class GraphLayers {
-  constructor(private g: Graph) {}
+  constructor(private g: Graph) { }
 
   dense(
-      name: string, x: Tensor, units: number,
-      activation: ((x: Tensor) => Tensor)|null = null, useBias = true,
-      kernelInitializer: Initializer = new VarianceScalingInitializer(),
-      biasInitializer: Initializer = new ZerosInitializer()) {
+    name: string, x: Tensor, units: number,
+    activation: ((x: Tensor) => Tensor) | null = null, useBias = true,
+    kernelInitializer: Initializer = new VarianceScalingInitializer(),
+    biasInitializer: Initializer = new ZerosInitializer()) {
     const weights = this.g.variable(
-        name + '-weights',
-        kernelInitializer.initialize([x.shape[0], units], x.shape[0], units));
+      name + '-weights',
+      kernelInitializer.initialize([x.shape[0], units], x.shape[0], units));
 
     let out = this.g.matmul(x, weights);
 
     if (useBias) {
       const bias = this.g.variable(
-          name + '-bias',
-          biasInitializer.initialize([units], x.shape[0], units));
+        name + '-bias',
+        biasInitializer.initialize([units], x.shape[0], units));
       out = this.g.add(out, bias);
     }
 
@@ -105,7 +105,7 @@ export class Graph {
     } else if (value instanceof Array) {
       const flatValues = util.flatten(value as number[]);
       const vals = new Float32Array(flatValues as number[]);
-      finalValue = NDArray.make(util.inferShape(value), {values: vals});
+      finalValue = NDArray.make(util.inferShape(value), { values: vals });
     } else {
       throw new Error('unimplemented constant type.');
     }
@@ -120,7 +120,18 @@ export class Graph {
    */
   reshape(x: Tensor, shape: number[]): Tensor {
     return this.addNodeAndReturnOutput(
-        new ReshapeNode(this, 'Reshape', x, shape));
+      new ReshapeNode(this, 'Reshape', x, shape));
+  }
+
+  /**
+   * Transpose the input tensor
+   * @param x The input tensor to be transposed.
+   * @param perm Optional. The permutation of the dimensions of x.
+   * @return The tensor representing the transpose of x.
+   */
+  transpose(x: Tensor, perm?: number[]): Tensor {
+    return this.addNodeAndReturnOutput(
+      new TransposeNode(this, 'Transpose', x, perm));
   }
 
   /**
@@ -132,9 +143,9 @@ export class Graph {
    * @return The tensor representing c1*t1+c2*t2.
    */
   fusedLinearCombination(x1: Tensor, x2: Tensor, c1: Tensor, c2: Tensor):
-      Tensor {
+    Tensor {
     return this.addNodeAndReturnOutput(
-        new FusedLinearCombinationNode(this, x1, x2, c1, c2));
+      new FusedLinearCombinationNode(this, x1, x2, c1, c2));
   }
 
   /**
@@ -220,10 +231,10 @@ export class Graph {
    * @return The tensor representing the convolution operation.
    */
   conv2d(
-      x: Tensor, w: Tensor, b: Tensor, fieldSize: number, outputDepth: number,
-      stride = 1, zeroPad?: number): Tensor {
+    x: Tensor, w: Tensor, b: Tensor, fieldSize: number, outputDepth: number,
+    stride = 1, zeroPad?: number): Tensor {
     return this.addNodeAndReturnOutput(new Convolution2DNode(
-        this, x, w, b, fieldSize, outputDepth, stride, zeroPad));
+      this, x, w, b, fieldSize, outputDepth, stride, zeroPad));
   }
 
   /**
@@ -236,7 +247,7 @@ export class Graph {
    */
   maxPool(x: Tensor, fieldSize: number, stride = 1, zeroPad?: number): Tensor {
     return this.addNodeAndReturnOutput(
-        new MaxPoolNode(this, x, fieldSize, stride, zeroPad));
+      new MaxPoolNode(this, x, fieldSize, stride, zeroPad));
   }
 
   /**
@@ -339,7 +350,7 @@ export class Graph {
    */
   softmaxCrossEntropyCost(x: Tensor, target: Tensor): Tensor {
     return this.addNodeAndReturnOutput(
-        new SoftmaxCrossEntropyCostNode(this, x, target));
+      new SoftmaxCrossEntropyCostNode(this, x, target));
   }
 
   /**
@@ -350,7 +361,7 @@ export class Graph {
    */
   meanSquaredCost(label: Tensor, prediction: Tensor) {
     return this.addNodeAndReturnOutput(
-        new MeanSquaredCostNode(this, label, prediction));
+      new MeanSquaredCostNode(this, label, prediction));
   }
 
   /**
@@ -420,8 +431,8 @@ export abstract class Node {
    * @param output This node's output Tensor
    */
   constructor(
-      public graph: Graph, public name: string,
-      public inputs: {[name: string]: Tensor}, public output: Tensor) {
+    public graph: Graph, public name: string,
+    public inputs: { [name: string]: Tensor }, public output: Tensor) {
     this.id = Node.nextID++;
     output.node = this;
   }
@@ -442,9 +453,9 @@ export class VariableNode extends Node {
   }
   validate() {
     util.assert(
-        this.data != null,
-        'Error adding variable op: Data for variable \'' + this.name +
-            '\' is null or undefined');
+      this.data != null,
+      'Error adding variable op: Data for variable \'' + this.name +
+      '\' is null or undefined');
   }
 }
 
@@ -458,7 +469,7 @@ export class PlaceholderNode extends Node {
   constructor(graph: Graph, name: string, shape: number[]) {
     super(graph, name, {}, new Tensor(shape));
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -472,9 +483,9 @@ export class ConstantNode extends Node {
   }
   validate() {
     util.assert(
-        this.data != null,
-        'Error adding constant: data for placeholder \'' + this.name +
-            '\' is null or undefined');
+      this.data != null,
+      'Error adding constant: data for placeholder \'' + this.name +
+      '\' is null or undefined');
   }
 }
 
@@ -486,18 +497,52 @@ export class ConstantNode extends Node {
 export class ReshapeNode extends Node {
   static readonly X = 'x';
   constructor(
-      graph: Graph, public name: string, private x: Tensor,
-      private shape: number[]) {
-    super(graph, name, {x}, new Tensor(shape));
+    graph: Graph, public name: string, private x: Tensor,
+    private shape: number[]) {
+    super(graph, name, { x }, new Tensor(shape));
   }
   validate() {
     const xSize = util.sizeFromShape(this.x.shape);
     const shapeSize = util.sizeFromShape(this.shape);
     util.assert(
-        xSize === shapeSize,
-        `Error making reshape operation: input to reshape '${this.name}'` +
-            ` of shape (${this.x.shape}) does not match size of ` +
-            `requested shape ${this.shape}.`);
+      xSize === shapeSize,
+      `Error making reshape operation: input to reshape '${this.name}'` +
+      ` of shape (${this.x.shape}) does not match size of ` +
+      `requested shape ${this.shape}.`);
+  }
+}
+
+/**
+ * TransposeNode represents a transpose operation in the graph.
+ *
+ * @hidden
+ */
+export class TransposeNode extends Node {
+  static readonly X = 'x';
+  constructor(
+    graph: Graph, public name: string, private x: Tensor,
+    private perm?: number[]) {
+    super(graph, name, { x },
+      perm != null && x.shape.length === perm.length ?
+        new Tensor(perm.map(p => x.shape[p])) : new Tensor(x.shape.reverse()));
+  }
+
+  validate() {
+    if (this.perm != null) {
+      const rank = this.x.shape.length;
+      const rankMatch = rank === this.perm.length;
+      const indexMatch = this.perm.reduce(
+        (prev, curr) => prev && curr < rank,
+        true
+      );
+      util.assert(
+        rankMatch && indexMatch,
+        indexMatch ?
+          `Error making transpose operation: Rank of input '${this.name}'` +
+          `does not match length of perm '${this.perm}'` :
+          `Error making transpose operation: Permutation index in ` +
+          `${this.perm} larger than rank of input '${this.name}'`);
+    }
   }
 }
 
@@ -511,22 +556,25 @@ export class FusedLinearCombinationNode extends Node {
   static readonly C1 = 'c1';
   static readonly C2 = 'c2';
   constructor(
-      graph: Graph, private t1: Tensor, private t2: Tensor, private c1: Tensor,
-      private c2: Tensor) {
-    super(graph, 'Linear Combination', {t1, t2, c1, c2}, new Tensor(t1.shape));
+    graph: Graph, private t1: Tensor, private t2: Tensor, private c1: Tensor,
+    private c2: Tensor) {
+    super(
+      graph, 'Linear Combination',
+      { t1, t2, c1, c2 }, new Tensor(t1.shape)
+    );
   }
 
   validate() {
     util.assertShapesMatch(this.t1.shape, this.t2.shape);
     if (!util.isScalarShape(this.c1.shape)) {
       throw new Error(
-          'Error adding fusedLinearCombination: c1 is not a scalar, got ' +
-          `shape: ${this.c1.shape}`);
+        'Error adding fusedLinearCombination: c1 is not a scalar, got ' +
+        `shape: ${this.c1.shape}`);
     }
     if (!util.isScalarShape(this.c2.shape)) {
       throw new Error(
-          'Error adding fusedLinearCombination: c2 is not a scalar, got ' +
-          `shape: ${this.c2.shape}`);
+        'Error adding fusedLinearCombination: c2 is not a scalar, got ' +
+        `shape: ${this.c2.shape}`);
     }
   }
 }
@@ -540,24 +588,24 @@ export class AddNode extends Node {
 
   constructor(graph: Graph, private t1: Tensor, private t2: Tensor) {
     super(
-        graph, 'Add', {t1, t2},
-        new Tensor(util.sizeFromShape(t1.shape) === 1
-            ? t2.shape
-            : (t1.shape.length < t2.shape.length ? t2.shape : t1.shape)));
+      graph, 'Add', { t1, t2 },
+      new Tensor(util.sizeFromShape(t1.shape) === 1
+        ? t2.shape
+        : (t1.shape.length < t2.shape.length ? t2.shape : t1.shape)));
   }
 
   validate() {
     util.assert(
-        util.sizeFromShape(this.t1.shape) === 1 ||
-            util.sizeFromShape(this.t2.shape) === 1 ||
-            util.arraysEqual(this.t1.shape, this.t2.shape) ||
-            (this.t1.shape.length === 2 && this.t2.shape.length === 1 &&
-                this.t1.shape[1] === this.t2.shape[0]) ||
-            (this.t1.shape.length === 1 && this.t2.shape.length === 2 &&
-                this.t1.shape[0] === this.t2.shape[1]),
-        'Error adding add operation op: one of inputs must be scalar, ' +
-            `shapes ${this.t1.shape} and ${this.t2.shape} must match,` +
-            'or one of them can be broadcasted (2D and 1D).');
+      util.sizeFromShape(this.t1.shape) === 1 ||
+      util.sizeFromShape(this.t2.shape) === 1 ||
+      util.arraysEqual(this.t1.shape, this.t2.shape) ||
+      (this.t1.shape.length === 2 && this.t2.shape.length === 1 &&
+        this.t1.shape[1] === this.t2.shape[0]) ||
+      (this.t1.shape.length === 1 && this.t2.shape.length === 2 &&
+        this.t1.shape[0] === this.t2.shape[1]),
+      'Error adding add operation op: one of inputs must be scalar, ' +
+      `shapes ${this.t1.shape} and ${this.t2.shape} must match,` +
+      'or one of them can be broadcasted (2D and 1D).');
   }
 }
 
@@ -570,17 +618,17 @@ export class SubtractNode extends Node {
 
   constructor(graph: Graph, private t1: Tensor, private t2: Tensor) {
     super(
-        graph, 'Subtract', {t1, t2},
-        new Tensor(util.sizeFromShape(t1.shape) === 1 ? t2.shape : t1.shape));
+      graph, 'Subtract', { t1, t2 },
+      new Tensor(util.sizeFromShape(t1.shape) === 1 ? t2.shape : t1.shape));
   }
 
   validate() {
     util.assert(
-        util.sizeFromShape(this.t1.shape) === 1 ||
-            util.sizeFromShape(this.t2.shape) === 1 ||
-            util.arraysEqual(this.t1.shape, this.t2.shape),
-        'Error adding subtract op: one of inputs must be scalar or the ' +
-            `shapes ${this.t1.shape} and ${this.t2.shape} must match.`);
+      util.sizeFromShape(this.t1.shape) === 1 ||
+      util.sizeFromShape(this.t2.shape) === 1 ||
+      util.arraysEqual(this.t1.shape, this.t2.shape),
+      'Error adding subtract op: one of inputs must be scalar or the ' +
+      `shapes ${this.t1.shape} and ${this.t2.shape} must match.`);
   }
 }
 
@@ -593,17 +641,17 @@ export class MultiplyNode extends Node {
 
   constructor(graph: Graph, private t1: Tensor, private t2: Tensor) {
     super(
-        graph, 'Multiply', {t1, t2},
-        new Tensor(util.sizeFromShape(t1.shape) === 1 ? t2.shape : t1.shape));
+      graph, 'Multiply', { t1, t2 },
+      new Tensor(util.sizeFromShape(t1.shape) === 1 ? t2.shape : t1.shape));
   }
 
   validate() {
     util.assert(
-        util.sizeFromShape(this.t1.shape) === 1 ||
-            util.sizeFromShape(this.t2.shape) === 1 ||
-            util.arraysEqual(this.t1.shape, this.t2.shape),
-        'Error adding multiply op: one of inputs must be scalar or the ' +
-            `shapes ${this.t1.shape} and ${this.t2.shape} must match.`);
+      util.sizeFromShape(this.t1.shape) === 1 ||
+      util.sizeFromShape(this.t2.shape) === 1 ||
+      util.arraysEqual(this.t1.shape, this.t2.shape),
+      'Error adding multiply op: one of inputs must be scalar or the ' +
+      `shapes ${this.t1.shape} and ${this.t2.shape} must match.`);
   }
 }
 
@@ -616,17 +664,17 @@ export class DivideNode extends Node {
 
   constructor(graph: Graph, private t1: Tensor, private t2: Tensor) {
     super(
-        graph, 'Divide', {t1, t2},
-        new Tensor(util.sizeFromShape(t1.shape) === 1 ? t2.shape : t1.shape));
+      graph, 'Divide', { t1, t2 },
+      new Tensor(util.sizeFromShape(t1.shape) === 1 ? t2.shape : t1.shape));
   }
 
   validate() {
     util.assert(
-        util.sizeFromShape(this.t1.shape) === 1 ||
-            util.sizeFromShape(this.t2.shape) === 1 ||
-            util.arraysEqual(this.t1.shape, this.t2.shape),
-        'Error adding divide op: one of inputs must be scalar or the ' +
-            `shapes ${this.t1.shape} and ${this.t2.shape} must match.`);
+      util.sizeFromShape(this.t1.shape) === 1 ||
+      util.sizeFromShape(this.t2.shape) === 1 ||
+      util.arraysEqual(this.t1.shape, this.t2.shape),
+      'Error adding divide op: one of inputs must be scalar or the ' +
+      `shapes ${this.t1.shape} and ${this.t2.shape} must match.`);
   }
 }
 
@@ -637,10 +685,10 @@ export class ReduceSumNode extends Node {
   static readonly X = 'x';
 
   constructor(graph: Graph, x: Tensor) {
-    super(graph, 'ReduceSum', {x}, new Tensor([]));
+    super(graph, 'ReduceSum', { x }, new Tensor([]));
   }
 
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -652,11 +700,11 @@ export class Concat3DNode extends Node {
   static readonly X2 = 'x2';
   static readonly AXIS = 'axis';
   constructor(
-      graph: Graph, private x1: Tensor, private x2: Tensor,
-      public axis: number) {
+    graph: Graph, private x1: Tensor, private x2: Tensor,
+    public axis: number) {
     super(
-        graph, 'Concat3D', {x1, x2},
-        new Tensor(concat_util.computeOutShape(x1.shape, x2.shape, axis)));
+      graph, 'Concat3D', { x1, x2 },
+      new Tensor(concat_util.computeOutShape(x1.shape, x2.shape, axis)));
   }
   validate() {
     concat_util.assertParams(this.x1.shape, this.x2.shape, this.axis);
@@ -683,31 +731,31 @@ export class MatMulNode extends Node {
   static readonly X2 = 'x2';
   constructor(graph: Graph, private x1: Tensor, private x2: Tensor) {
     super(
-        graph, 'MatMul', {x1, x2},
-        new Tensor(getMatMulOutputShape(x1.shape, x2.shape)));
+      graph, 'MatMul', { x1, x2 },
+      new Tensor(getMatMulOutputShape(x1.shape, x2.shape)));
   }
 
   validate() {
     if (this.x1.shape.length === 2 && this.x2.shape.length === 2) {
       util.assert(
-          this.x1.shape[1] === this.x2.shape[0],
-          'Error adding matmul op: inner shapes of matrices with shapes ' +
-              `${this.x1.shape} and ${this.x2.shape} must match.`);
+        this.x1.shape[1] === this.x2.shape[0],
+        'Error adding matmul op: inner shapes of matrices with shapes ' +
+        `${this.x1.shape} and ${this.x2.shape} must match.`);
     } else if (this.x1.shape.length === 2 && this.x2.shape.length === 1) {
       util.assert(
-          this.x1.shape[1] === this.x2.shape[0],
-          'Error adding matmul op: second dimension of matrix with shape ' +
-              this.x1.shape.toString() +
-              ` must match size of vector with shape ${this.x2.shape}.`);
+        this.x1.shape[1] === this.x2.shape[0],
+        'Error adding matmul op: second dimension of matrix with shape ' +
+        this.x1.shape.toString() +
+        ` must match size of vector with shape ${this.x2.shape}.`);
     } else if (this.x1.shape.length === 1 && this.x2.shape.length === 2) {
       util.assert(
-          this.x1.shape[0] === this.x2.shape[0],
-          `Error adding matmul op: size of vector with shape ${this.x1.shape}` +
-              ` must match first dimension of matrix with ` +
-              `shape ${this.x2.shape}.`);
+        this.x1.shape[0] === this.x2.shape[0],
+        `Error adding matmul op: size of vector with shape ${this.x1.shape}` +
+        ` must match first dimension of matrix with ` +
+        `shape ${this.x2.shape}.`);
     } else {
       throw new Error(
-          'Error adding matmul op: inputs must be vectors or matrices.');
+        'Error adding matmul op: inputs must be vectors or matrices.');
     }
   }
 }
@@ -721,33 +769,33 @@ export class Convolution2DNode extends Node {
   static readonly W = 'w';
   static readonly B = 'b';
   constructor(
-      graph: Graph, private x: Tensor, private w: Tensor, private b: Tensor,
-      public fieldSize: number, public outputDepth: number, public stride = 1,
-      public zeroPad?: number) {
+    graph: Graph, private x: Tensor, private w: Tensor, private b: Tensor,
+    public fieldSize: number, public outputDepth: number, public stride = 1,
+    public zeroPad?: number) {
     super(
-        graph, 'Convolution 2D', {x, w, b},
-        new Tensor(conv_util.computeOutputShape3D(
-            x.shape as [number, number, number], fieldSize, outputDepth, stride,
-            zeroPad)));
+      graph, 'Convolution 2D', { x, w, b },
+      new Tensor(conv_util.computeOutputShape3D(
+        x.shape as [number, number, number], fieldSize, outputDepth, stride,
+        zeroPad)));
   }
   validate() {
     util.assert(
-        this.x.shape.length === 3,
-        'Error adding conv2d op: input must be of rank 3, but got shape: ' +
-            `${this.x.shape}.`);
+      this.x.shape.length === 3,
+      'Error adding conv2d op: input must be of rank 3, but got shape: ' +
+      `${this.x.shape}.`);
     util.assert(
-        this.w.shape.length === 4,
-        'Error adding conv2d op: weights must be of rank 4, but got shape: ' +
-            `${this.w.shape}.`);
+      this.w.shape.length === 4,
+      'Error adding conv2d op: weights must be of rank 4, but got shape: ' +
+      `${this.w.shape}.`);
     util.assert(
-        this.b.shape.length === 1,
-        'Error adding conv2d op: biases must be of rank 1, but got shape: ' +
-            `${this.b.shape}.`);
+      this.b.shape.length === 1,
+      'Error adding conv2d op: biases must be of rank 1, but got shape: ' +
+      `${this.b.shape}.`);
 
     util.assert(
-        this.x.shape[2] === this.w.shape[2],
-        `Error adding conv2d op: depth of input (${this.x.shape[2]}) ` +
-            `must match input depth for weights (${this.w.shape[2]}).`);
+      this.x.shape[2] === this.w.shape[2],
+      `Error adding conv2d op: depth of input (${this.x.shape[2]}) ` +
+      `must match input depth for weights (${this.w.shape[2]}).`);
   }
 }
 
@@ -758,19 +806,19 @@ export class Convolution2DNode extends Node {
 export class MaxPoolNode extends Node {
   static readonly X = 'x';
   constructor(
-      graph: Graph, private x: Tensor, public fieldSize: number,
-      public stride = 1, public zeroPad?: number) {
+    graph: Graph, private x: Tensor, public fieldSize: number,
+    public stride = 1, public zeroPad?: number) {
     super(
-        graph, 'Max pool', {x},
-        new Tensor(conv_util.computeOutputShape3D(
-            x.shape as [number, number, number], fieldSize, x.shape[2], stride,
-            zeroPad)));
+      graph, 'Max pool', { x },
+      new Tensor(conv_util.computeOutputShape3D(
+        x.shape as [number, number, number], fieldSize, x.shape[2], stride,
+        zeroPad)));
   }
   validate() {
     util.assert(
-        this.x.shape.length === 3,
-        'Error adding maxPool op: input must be of rank 3, but got shape: ' +
-            `${this.x.shape}.`);
+      this.x.shape.length === 3,
+      'Error adding maxPool op: input must be of rank 3, but got shape: ' +
+      `${this.x.shape}.`);
   }
 }
 
@@ -781,9 +829,9 @@ export class MaxPoolNode extends Node {
 export class ReLUNode extends Node {
   static readonly X = 'x';
   constructor(graph: Graph, x: Tensor) {
-    super(graph, 'ReLU', {x}, new Tensor(x.shape));
+    super(graph, 'ReLU', { x }, new Tensor(x.shape));
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -794,10 +842,10 @@ export class LeakyReLUNode extends Node {
   static readonly X = 'x';
   public alpha: number;
   constructor(graph: Graph, x: Tensor, alpha: number) {
-    super(graph, 'LeakyReLU', {x}, new Tensor(x.shape));
+    super(graph, 'LeakyReLU', { x }, new Tensor(x.shape));
     this.alpha = alpha;
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -809,22 +857,22 @@ export class PReLUNode extends Node {
   static readonly ALPHA = 'alpha';
 
   constructor(graph: Graph, private x: Tensor, private alpha: Tensor) {
-    super(graph, 'PReLU', {x, alpha}, new Tensor(x.shape));
+    super(graph, 'PReLU', { x, alpha }, new Tensor(x.shape));
   }
 
   validate() {
     util.assert(util.arraysEqual(this.x.shape, this.alpha.shape),
       'Error adding pRelu op: the ' +
-        `shapes x: ${this.x.shape} and alpha: ${this.alpha.shape} must match.`);
+      `shapes x: ${this.x.shape} and alpha: ${this.alpha.shape} must match.`);
   }
 }
 
 export class EluNode extends Node {
   static readonly X = 'x';
   constructor(graph: Graph, x: Tensor) {
-    super(graph, 'Elu', {x}, new Tensor(x.shape));
+    super(graph, 'Elu', { x }, new Tensor(x.shape));
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -834,9 +882,9 @@ export class EluNode extends Node {
 export class ExpNode extends Node {
   static readonly X = 'x';
   constructor(graph: Graph, x: Tensor) {
-    super(graph, 'Exp', {x}, new Tensor(x.shape));
+    super(graph, 'Exp', { x }, new Tensor(x.shape));
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -846,9 +894,9 @@ export class ExpNode extends Node {
 export class LogNode extends Node {
   static readonly X = 'x';
   constructor(graph: Graph, x: Tensor) {
-    super(graph, 'Log', {x}, new Tensor(x.shape));
+    super(graph, 'Log', { x }, new Tensor(x.shape));
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -858,9 +906,9 @@ export class LogNode extends Node {
 export class TanHNode extends Node {
   static readonly X = 'x';
   constructor(graph: Graph, x: Tensor) {
-    super(graph, 'TanH', {x}, new Tensor(x.shape));
+    super(graph, 'TanH', { x }, new Tensor(x.shape));
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -870,9 +918,9 @@ export class TanHNode extends Node {
 export class SigmoidNode extends Node {
   static readonly X = 'x';
   constructor(graph: Graph, x: Tensor) {
-    super(graph, 'Sigmoid', {x}, new Tensor(x.shape));
+    super(graph, 'Sigmoid', { x }, new Tensor(x.shape));
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -882,9 +930,9 @@ export class SigmoidNode extends Node {
 export class SquareNode extends Node {
   static readonly X = 'x';
   constructor(graph: Graph, x: Tensor) {
-    super(graph, 'Square', {x}, new Tensor(x.shape));
+    super(graph, 'Square', { x }, new Tensor(x.shape));
   }
-  validate() {}
+  validate() { }
 }
 
 /**
@@ -896,13 +944,13 @@ export class SoftmaxCrossEntropyCostNode extends Node {
   static readonly X = 'x';
   static readonly TARGET = 'target';
   constructor(graph: Graph, private x: Tensor, private target: Tensor) {
-    super(graph, 'SoftmaxCrossEntropyCost', {x, target}, new Tensor([]));
+    super(graph, 'SoftmaxCrossEntropyCost', { x, target }, new Tensor([]));
   }
   validate() {
     util.assert(
-        util.arraysEqual(this.x.shape, this.target.shape),
-        `Error adding softmaxCrossEntropyCost op: x shape (${this.x.shape}) ` +
-            `must match target shape (${this.target.shape}).`);
+      util.arraysEqual(this.x.shape, this.target.shape),
+      `Error adding softmaxCrossEntropyCost op: x shape (${this.x.shape}) ` +
+      `must match target shape (${this.target.shape}).`);
   }
 }
 
@@ -913,15 +961,15 @@ export class SoftmaxNode extends Node {
   static readonly X = 'x';
 
   constructor(graph: Graph, private x: Tensor) {
-    super(graph, 'Softmax', {x}, new Tensor(x.shape));
+    super(graph, 'Softmax', { x }, new Tensor(x.shape));
   }
   validate() {
     util.assert(
-        this.x.shape.length === 1,
-        'The input to a softmax must be a 1-D tensor');
+      this.x.shape.length === 1,
+      'The input to a softmax must be a 1-D tensor');
     util.assert(
-        this.x.shape[0] >= 2,
-        'The input to a softmax must have at least 2 values');
+      this.x.shape[0] >= 2,
+      'The input to a softmax must have at least 2 values');
   }
 }
 
@@ -935,13 +983,13 @@ export class MeanSquaredCostNode extends Node {
   static readonly LABEL = 'label';
   static readonly PREDICTION = 'prediction';
   constructor(graph: Graph, private label: Tensor, private prediction: Tensor) {
-    super(graph, 'Mean Squared Cost', {label, prediction}, new Tensor([]));
+    super(graph, 'Mean Squared Cost', { label, prediction }, new Tensor([]));
   }
   validate() {
     util.assert(
-        util.arraysEqual(this.label.shape, this.prediction.shape),
-        `Error adding meanSquaredCost op: label shape (${this.label.shape}) ` +
-            `must match prediction shape (${this.prediction.shape}).`);
+      util.arraysEqual(this.label.shape, this.prediction.shape),
+      `Error adding meanSquaredCost op: label shape (${this.label.shape}) ` +
+      `must match prediction shape (${this.prediction.shape}).`);
   }
 }
 
@@ -952,12 +1000,12 @@ export class MeanSquaredCostNode extends Node {
 export class ArgMaxNode extends Node {
   static readonly X = 'x';
   constructor(graph: Graph, public x: Tensor) {
-    super(graph, 'ArgMax', {x}, new Tensor([1]));
+    super(graph, 'ArgMax', { x }, new Tensor([1]));
   }
   validate() {
     util.assert(
-        util.sizeFromShape(this.x.shape) > 0,
-        'Error adding argmax op: input tensor must have at least one entry.');
+      util.sizeFromShape(this.x.shape) > 0,
+      'Error adding argmax op: input tensor must have at least one entry.');
   }
 }
 
@@ -969,13 +1017,13 @@ export class ArgMaxEqualsNode extends Node {
   static readonly X1 = 'x1';
   static readonly X2 = 'x2';
   constructor(graph: Graph, private x1: Tensor, private x2: Tensor) {
-    super(graph, 'ArgMaxEquals', {x1, x2}, new Tensor([1]));
+    super(graph, 'ArgMaxEquals', { x1, x2 }, new Tensor([1]));
   }
   validate() {
     util.assert(
-        util.arraysEqual(this.x1.shape, this.x2.shape),
-        `Error adding ArgMaxEquals op: x1 shape (${this.x1.shape}) ` +
-            `must match x2 shape (${this.x2.shape}).`);
+      util.arraysEqual(this.x1.shape, this.x2.shape),
+      `Error adding ArgMaxEquals op: x1 shape (${this.x1.shape}) ` +
+      `must match x2 shape (${this.x2.shape}).`);
   }
 }
 
@@ -983,4 +1031,4 @@ export class ArgMaxEqualsNode extends Node {
  * @hidden
  */
 export type ArrayData =
-    NDArray|number|number[]|number[][]|number[][][]|number[][][][];
+  NDArray | number | number[] | number[][] | number[][][] | number[][][][];

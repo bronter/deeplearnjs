@@ -16,14 +16,14 @@
  */
 
 import * as conv_util from '../math/conv_util';
-import {NDArray} from '../math/ndarray';
+import { NDArray } from '../math/ndarray';
 
-import {ConstantNode, Graph, Node, Tensor, VariableNode} from './graph';
-import {FeedDictionary} from './session';
+import { ConstantNode, Graph, Node, Tensor, VariableNode } from './graph';
+import { FeedDictionary } from './session';
 import * as session_util from './session_util';
 
 class TestNode extends Node {
-  validate() {}
+  validate() { }
 }
 
 describe('Graph', () => {
@@ -72,9 +72,11 @@ describe('Graph', () => {
     const fc3B = g.variable('fc3B', NDArray.zeros([10]));
     const fc3 = g.add(g.matmul(fc3W, relu2), fc3B);
 
-    const fd = new FeedDictionary([{tensor: input, data: NDArray.zeros([1])}]);
+    const fd = new FeedDictionary([{
+      tensor: input, data: NDArray.zeros([1])
+    }]);
     const orderedEvaluationSet =
-        session_util.getOrderedEvaluationSetFromEvalTensor([fc3], fd);
+      session_util.getOrderedEvaluationSetFromEvalTensor([fc3], fd);
     expect(orderedEvaluationSet.length).toBeGreaterThan(1);
   });
 });
@@ -174,6 +176,26 @@ describe('Reshape validation', () => {
   });
 });
 
+describe('Transpose validation', () => {
+  let g: Graph;
+
+  beforeEach(() => {
+    g = new Graph();
+  });
+
+  it('Different perm and shape size throws', () => {
+    expect(() => g.transpose(new Tensor([2, 3]), [2, 1, 0])).toThrowError();
+  });
+
+  it('Perm index larger than shape rank should throw', () => {
+    expect(() => g.transpose(new Tensor([2, 3]), [2, 0])).toThrowError();
+  });
+
+  it('Same size perm and shape does not throw', () => {
+    expect(g.transpose(new Tensor([2, 3]), [1, 0]).shape).toEqual([3, 2]);
+  });
+});
+
 describe('FusedLinearCombination validation', () => {
   let g: Graph;
 
@@ -183,34 +205,34 @@ describe('FusedLinearCombination validation', () => {
 
   it('Different shape tensors throws', () => {
     expect(
-        () => g.fusedLinearCombination(
-            new Tensor([3, 4]), new Tensor([1]), new Tensor([]),
-            new Tensor([])))
-        .toThrowError();
+      () => g.fusedLinearCombination(
+        new Tensor([3, 4]), new Tensor([1]), new Tensor([]),
+        new Tensor([])))
+      .toThrowError();
   });
 
   it('Non scalar c1 throws', () => {
     expect(
-        () => g.fusedLinearCombination(
-            new Tensor([3, 4]), new Tensor([3, 4]), new Tensor([1, 2]),
-            new Tensor([])))
-        .toThrowError();
+      () => g.fusedLinearCombination(
+        new Tensor([3, 4]), new Tensor([3, 4]), new Tensor([1, 2]),
+        new Tensor([])))
+      .toThrowError();
   });
 
   it('Non scalar c2 throws', () => {
     expect(
-        () => g.fusedLinearCombination(
-            new Tensor([3, 4]), new Tensor([3, 4]), new Tensor([]),
-            new Tensor([1, 2])))
-        .toThrowError();
+      () => g.fusedLinearCombination(
+        new Tensor([3, 4]), new Tensor([3, 4]), new Tensor([]),
+        new Tensor([1, 2])))
+      .toThrowError();
   });
 
   it('does not throw when shapes correct', () => {
     expect(g.fusedLinearCombination(
-                new Tensor([3, 4]), new Tensor([3, 4]), new Tensor([]),
-                new Tensor([]))
-               .shape)
-        .toEqual([3, 4]);
+      new Tensor([3, 4]), new Tensor([3, 4]), new Tensor([]),
+      new Tensor([]))
+      .shape)
+      .toEqual([3, 4]);
   });
 });
 
@@ -223,7 +245,7 @@ describe('Add validation', () => {
 
   it('Different shapes throws', () => {
     expect(() => g.add(new Tensor([5, 4]), new Tensor([1, 2, 3])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Same size does not throw', () => {
@@ -252,7 +274,7 @@ describe('Subtract validation', () => {
 
   it('Different shapes throws', () => {
     expect(() => g.subtract(new Tensor([5, 4]), new Tensor([1, 2, 3])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Same size does not throw', () => {
@@ -271,7 +293,7 @@ describe('Multiply validation', () => {
 
   it('Different shapes throws', () => {
     expect(() => g.multiply(new Tensor([5, 4]), new Tensor([1, 2, 3])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Same size does not throw', () => {
@@ -290,7 +312,7 @@ describe('Divide validation', () => {
 
   it('Different shapes throws', () => {
     expect(() => g.divide(new Tensor([5, 4]), new Tensor([1, 2, 3])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Same size does not throw', () => {
@@ -321,42 +343,42 @@ describe('Concat3d validation', () => {
 
   it('Non 3-rank tensor x1 throws', () => {
     expect(() => g.concat3d(new Tensor([5, 4]), new Tensor([1, 2, 3]), 0))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Non 3-rank tensor x2 throws', () => {
     expect(() => g.concat3d(new Tensor([5, 4, 1]), new Tensor([1, 2]), 0))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Axis=0 different shapes throws', () => {
     expect(() => g.concat3d(new Tensor([5, 4, 1]), new Tensor([1, 2, 1]), 0))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Axis=1 different shapes throws', () => {
     expect(() => g.concat3d(new Tensor([5, 4, 1]), new Tensor([1, 2, 1]), 1))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Axis=2 different shapes throws', () => {
     expect(() => g.concat3d(new Tensor([5, 4, 1]), new Tensor([1, 2, 1]), 2))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Axis=0 shapes the same does not throw', () => {
     expect(g.concat3d(new Tensor([5, 4, 3]), new Tensor([1, 4, 3]), 0).shape)
-        .toEqual([6, 4, 3]);
+      .toEqual([6, 4, 3]);
   });
 
   it('Axis=1 shapes the same does not throw', () => {
     expect(g.concat3d(new Tensor([5, 3, 3]), new Tensor([5, 4, 3]), 1).shape)
-        .toEqual([5, 7, 3]);
+      .toEqual([5, 7, 3]);
   });
 
   it('Axis=2 shapes the same does not throw', () => {
     expect(g.concat3d(new Tensor([5, 4, 3]), new Tensor([5, 4, 1]), 2).shape)
-        .toEqual([5, 4, 4]);
+      .toEqual([5, 4, 4]);
   });
 });
 
@@ -369,17 +391,17 @@ describe('matmul validation', () => {
 
   it('Wrong rank x1 throws', () => {
     expect(() => g.matmul(new Tensor([5, 4, 3]), new Tensor([1, 2])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Wrong rank x2 throws', () => {
     expect(() => g.matmul(new Tensor([5, 4]), new Tensor([1, 2, 3])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Inner dimensions of matrix multiply do not match throws', () => {
     expect(() => g.matmul(new Tensor([5, 4]), new Tensor([5, 5])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Inner dimensions of matrix times vector does not match throws', () => {
@@ -426,45 +448,45 @@ describe('conv2d validation', () => {
 
   it('Wrong rank x throws', () => {
     expect(
-        () => g.conv2d(
-            new Tensor([5, 4]), new Tensor([1, 2, 3, 4]),
-            new Tensor([outputDepth]), fieldSize, outputDepth, stride, zeroPad))
-        .toThrowError();
+      () => g.conv2d(
+        new Tensor([5, 4]), new Tensor([1, 2, 3, 4]),
+        new Tensor([outputDepth]), fieldSize, outputDepth, stride, zeroPad))
+      .toThrowError();
   });
 
   it('Wrong rank weights throws', () => {
     expect(
-        () => g.conv2d(
-            new Tensor([5, 4, 3]), new Tensor([1, 2, 3]),
-            new Tensor([outputDepth]), fieldSize, outputDepth, stride, zeroPad))
-        .toThrowError();
+      () => g.conv2d(
+        new Tensor([5, 4, 3]), new Tensor([1, 2, 3]),
+        new Tensor([outputDepth]), fieldSize, outputDepth, stride, zeroPad))
+      .toThrowError();
   });
 
   it('Wrong rank biases throws', () => {
     expect(
-        () => g.conv2d(
-            new Tensor([5, 4, 3]), new Tensor([1, 2, 3, 4]), new Tensor([5, 5]),
-            fieldSize, outputDepth, stride, zeroPad))
-        .toThrowError();
+      () => g.conv2d(
+        new Tensor([5, 4, 3]), new Tensor([1, 2, 3, 4]), new Tensor([5, 5]),
+        fieldSize, outputDepth, stride, zeroPad))
+      .toThrowError();
   });
 
   it('Input depths dont match throws', () => {
     expect(
-        () => g.conv2d(
-            new Tensor([5, 4, 3]), new Tensor([1, 2, 100, 4]),
-            new Tensor([outputDepth]), fieldSize, outputDepth, stride, zeroPad))
-        .toThrowError();
+      () => g.conv2d(
+        new Tensor([5, 4, 3]), new Tensor([1, 2, 100, 4]),
+        new Tensor([outputDepth]), fieldSize, outputDepth, stride, zeroPad))
+      .toThrowError();
   });
 
   it('Shapes matches does not throw', () => {
     const expectedShape = conv_util.computeOutputShape3D(
-        [5, 4, 3], fieldSize, outputDepth, stride, zeroPad);
+      [5, 4, 3], fieldSize, outputDepth, stride, zeroPad);
     expect(g.conv2d(
-                new Tensor([5, 4, 3]), new Tensor([1, 2, 3, 4]),
-                new Tensor([outputDepth]), fieldSize, outputDepth, stride,
-                zeroPad)
-               .shape)
-        .toEqual(expectedShape);
+      new Tensor([5, 4, 3]), new Tensor([1, 2, 3, 4]),
+      new Tensor([outputDepth]), fieldSize, outputDepth, stride,
+      zeroPad)
+      .shape)
+      .toEqual(expectedShape);
   });
 });
 
@@ -483,14 +505,14 @@ describe('maxpool validation', () => {
 
   it('Wrong rank x throws', () => {
     expect(() => g.maxPool(new Tensor([5, 4]), fieldSize, stride, zeroPad))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Shapes matches does not throw', () => {
     const expectedShape = conv_util.computeOutputShape3D(
-        [5, 4, 3], fieldSize, 3, stride, zeroPad);
+      [5, 4, 3], fieldSize, 3, stride, zeroPad);
     expect(g.maxPool(new Tensor([5, 4, 3]), fieldSize, stride, zeroPad).shape)
-        .toEqual(expectedShape);
+      .toEqual(expectedShape);
   });
 });
 
@@ -527,7 +549,7 @@ describe('pRelu validation', () => {
 
   it('Different shapes throws', () => {
     expect(() => g.prelu(new Tensor([5, 4]), new Tensor([1, 2, 3])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Same size does not throw', () => {
@@ -618,15 +640,15 @@ describe('softmaxCrossEntropy validation', () => {
 
   it('Shapes not equal throws', () => {
     expect(
-        () => g.softmaxCrossEntropyCost(
-            new Tensor([5, 4]), new Tensor([5, 4, 3])))
-        .toThrowError();
+      () => g.softmaxCrossEntropyCost(
+        new Tensor([5, 4]), new Tensor([5, 4, 3])))
+      .toThrowError();
   });
 
   it('Does not throw', () => {
     expect(
-        g.softmaxCrossEntropyCost(new Tensor([5, 4]), new Tensor([5, 4])).shape)
-        .toEqual([]);
+      g.softmaxCrossEntropyCost(new Tensor([5, 4]), new Tensor([5, 4])).shape)
+      .toEqual([]);
   });
 });
 
@@ -639,12 +661,12 @@ describe('meanSquaredCost validation', () => {
 
   it('Shapes not equal throws', () => {
     expect(() => g.meanSquaredCost(new Tensor([5, 4]), new Tensor([5, 4, 3])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Does not throw', () => {
     expect(g.meanSquaredCost(new Tensor([5, 4]), new Tensor([5, 4])).shape)
-        .toEqual([]);
+      .toEqual([]);
   });
 });
 
@@ -657,12 +679,12 @@ describe('argmaxEquals validation', () => {
 
   it('Shapes not equal throws', () => {
     expect(() => g.argmaxEquals(new Tensor([5, 4]), new Tensor([5, 4, 3])))
-        .toThrowError();
+      .toThrowError();
   });
 
   it('Does not throw', () => {
     expect(g.argmaxEquals(new Tensor([5, 4]), new Tensor([5, 4])).shape)
-        .toEqual([1]);
+      .toEqual([1]);
   });
 });
 
